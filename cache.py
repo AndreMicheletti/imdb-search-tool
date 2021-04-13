@@ -1,8 +1,6 @@
 from collections import defaultdict
 import redis
 
-r = redis.Redis(host='localhost', port=6379, db=0)
-
 cache_store = defaultdict(dict)
 
 
@@ -24,16 +22,16 @@ def memory_cache_by_first_arg(fn):
 
         cache_key = args[0]
         if cache_store[function_name].get(cache_key, None):
-            return r.get(cache_key)
+            return cache_store[function_name][cache_key]
         else:
             result = fn(*args, **kwargs)
-            r.set(cache_key, result)
+            cache_store[function_name][cache_key] = result
             return result
     return decorated
 
-
 def redis_cache_by_first_arg(fn):
     """ Simple decorator to cache function result using redis """
+    r = redis.Redis(host='localhost', port=6379, db=0)
     function_name = fn.__name__
 
     def decorated(*args, **kwargs):

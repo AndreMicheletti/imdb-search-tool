@@ -1,7 +1,7 @@
-from flask import Flask
-from flask import request
+from flask import Flask, request
 
 from imdb.database import search_imdb_database
+
 app = Flask(__name__)
 
 
