@@ -11,7 +11,7 @@ how many movies it should fetch and starts crawling the IMDB website,
 starting at a predefined listing page, and stopping when it reaches the
 given limit or there are no more pages.
 
-The data indexing part was more interesting, but as the problem document
+The data indexing part was more interesting, and as the problem
 states, I should assume a not so large data scale, and it was advised
 to implement a solution rather than going for external tools.
 
@@ -39,7 +39,9 @@ and bind the redis port to the `docker run` command.
 **Data indexing/lookup**
 
 Could use a more optimized indexing strategy, such as using binary 
-search trees to avoid stepping into every document in the database everytime. 
+search trees to avoid stepping into every document in the database everytime.
+And for every document, we need to traverse through the entire string trying
+to find the keyword, which also increases the time complexity for searching.
 
 Also, given the problem domain, one could use databases such as 
 **ElasticSearch** that focus on indexing and searching documents to
@@ -49,6 +51,9 @@ be queryable using keywords, text-matching and "similarity".
 
 For better crawling performance, one could implement parallel execution and
 use multiples threads to crawl, parse and index the IMDB website.
+
+Using async frameworks such as `tornado` or `sanic`, or using background workers
+with `celery` could achieve this.
 
 **Unit Testing**
 
