@@ -6,12 +6,12 @@ r = redis.Redis(host='localhost', port=6379, db=0)
 cache_store = defaultdict(dict)
 
 
-def cache_using(store):
+def cache_using(store: str):
     """ Decorator to select which cache decorator to use """
     return {
         "redis": redis_cache_by_first_arg,
         "memory": memory_cache_by_first_arg,
-    }[store]
+    }[store.lower()]
 
 
 def memory_cache_by_first_arg(fn):

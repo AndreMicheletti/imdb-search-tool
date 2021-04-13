@@ -25,8 +25,7 @@ def index():
 def populate():
     from imdb.database import database_size
     max_movies = int(request.args.get('max', '1000'))
-    per_genre = int(request.args.get('per_genre', '100'))
-    populate_database(max_movies, per_genre)
+    populate_database(max_movies)
     return {
         "success": True,
         "message": "database populated",
@@ -34,9 +33,9 @@ def populate():
     }
 
 
-def populate_database(max_movies=1000, per_genre=100):
+def populate_database(max_movies=1000):
     from imdb.crawler import get_imdb_movies
-    get_imdb_movies(max_movies, movies_per_genre=per_genre)
+    get_imdb_movies(max_movies)
 
 
 if __name__ == '__main__':
