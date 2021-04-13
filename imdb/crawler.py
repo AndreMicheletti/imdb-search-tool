@@ -1,51 +1,46 @@
 import requests
 from bs4 import BeautifulSoup
+from cache import redis_cache_by_first_arg
 
 IMDB_HOST = "https://www.imdb.com"
 GENRES_PAGE = "https://www.imdb.com/feature/genre/?ref_=nv_ch_gr"
 
 
-def get_soup_for_page(url):
+@redis_cache_by_first_arg
+def get_html(url):
     response = requests.get(url)
-    return BeautifulSoup(response.text, 'html.parser')
+    return response.text
 
 
-def get_imdb_movies(database):
-    genres_urls = []
+def get_soup_for_page(url):
+    return BeautifulSoup(get_html(url), 'html.parser')
+
+
+def crawl_imdb_movies(max_movies=1000, movies_per_genre=100):
+    movie_counter = 0
     genres_page = get_soup_for_page(GENRES_PAGE)
     movies_genres_section = genres_page.find_all("div", class_="article")[5]
     for a_link in movies_genres_section.find_all("a"):
-        genres_urls.append(IMDB_HOST + a_link["href"])
-    print(f"CRAWLING TOP LEVEL: {len(genres_urls)} GENRES")
-    for genre_url in genres_urls:
-        crawl_genre_page(database, genre_url)
-    return True
+        if movie_counter == max_movies:
+            break
+        genre_counter = 0
+        genre_url = IMDB_HOST + a_link["href"]
+        genre_name = a_link.text
+        print(f"CRAWLING TOP LEVEL: GENRE {genre_url}")
+        for movie_url in crawl_genre_page(genre_url):
+            if genre_counter == movies_per_genre or movie_counter == max_movies:
+                break
+            genre_counter += 1
+            movie_counter += 1
+            yield (movie_url, genre_name)
 
 
-def crawl_genre_page(database, genre_url):
+def crawl_genre_page(genre_url):
     print(f"CRAWLING GENRE {genre_url}")
-    movies_urls = []
     genre_page = get_soup_for_page(genre_url)
+    next_page = genre_page.find("a", class_="lister-page-next next-page")
+    next_page_url = IMDB_HOST + next_page["href"]
     for movies_element in genre_page.find_all("div", class_="lister-item mode-advanced"):
         a_link = movies_element.find("h3", class_="lister-item-header").find("a")
-        movies_urls.append(IMDB_HOST + a_link["href"])
-    for movie_url in movies_urls:
-        crawl_movie_page(database, movie_url)
-
-
-def crawl_movie_page(database, movie_url):
-    print(f"CRAWLING MOVIE {movie_url}")
-    movie_page = get_soup_for_page(movie_url)
-
-    title = movie_page.find("div", class_="title_wrapper").find("h1").get_text(";", strip=True).split(";")[0]
-    credit_summary_elements = movie_page.find_all("div", class_="credit_summary_item")
-    director = credit_summary_elements[0].find("a").text
-    stars_links = credit_summary_elements[2].find_all("a")
-    stars = [str(elem.text) for elem in stars_links[:-1]]
-    movie_data = {
-        "title": title,
-        "director": director,
-        "stars": stars
-    }
-    print(movie_data)
-    database.append(movie_data)
+        yield IMDB_HOST + a_link["href"]
+    return crawl_genre_page(next_page_url)
