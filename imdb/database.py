@@ -14,10 +14,12 @@ def index_movie_to_database(movie_data: Dict[str, str]):
     Indexes a new movie record to the database, ignoring movies that were already indexed.
     :param movie_data: dict of movie data structure
     """
-    if movie_data["id"] not in imdb_id_index:
-        index_key = generate_movie_index_key(movie_data)
-        imbd_database[index_key] = movie_data
-        imdb_id_index.append(movie_data["id"])
+    if movie_data["id"] in imdb_id_index:
+        return False
+    index_key = generate_movie_index_key(movie_data)
+    imbd_database[index_key] = movie_data
+    imdb_id_index.append(movie_data["id"])
+    return True
 
 
 def generate_movie_index_key(movie_data: Dict[str, str]) -> str:
